@@ -34,7 +34,7 @@ static NSString * const kOpenUDID = @"com.OpenUDID";
 
 @interface OpenUDID (Private)
 + (BOOL) _writeToKeychainValue:(NSString*)value forKey:(NSString*)key;
-+ (NSString*) _getUDID;
++ (NSString*) _getOpenUDID;
 @end
 
 @implementation OpenUDID
@@ -57,9 +57,9 @@ static NSString * const kOpenUDID = @"com.OpenUDID";
     return (s == noErr);
 }
 
-// private method to return 
+// private method to return the OpenUDID
 //
-+ (NSString*) _getUDID {
++ (NSString*) _getOpenUDID {
     
     NSString* _openUDID = nil;
     
@@ -154,7 +154,7 @@ static NSString * const kOpenUDID = @"com.OpenUDID";
 	
 	if (status != noErr) {
         // Could not find the UDID, so let's generate it and store it, persistently.
-        resultString = [OpenUDID _getUDID];
+        resultString = [OpenUDID _getOpenUDID];
         [OpenUDID _writeToKeychainValue:resultString forKey:kOpenUDID];
         return resultString;
     }
