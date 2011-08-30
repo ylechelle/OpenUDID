@@ -128,7 +128,6 @@ static NSString * const kOpenUDID = @"com.OpenUDID";
         // bundleid could not be found, so let's register it
         // R is for registered, O is for opted-out...
         [OpenUDID _writeToKeychainValue:@"R" forKey:bundleid];
-        NSLog(@"Writing OpenUDID");
     } else {
         // bundleid found, let's find the value
         resultData = nil;
