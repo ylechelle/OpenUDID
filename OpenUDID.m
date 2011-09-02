@@ -58,7 +58,7 @@ static NSString * const kOpenUDID = @"com.OpenUDID.pboard";
     
     // Next we try to use an alternative method which uses the host name, process ID, and a time stamp
     // We then hash it with md5 to get 32 bytes, and then add 4 extra random bytes
-    // Collision is possible of course, but unlikely and suitable for most industry needs (e.g.. aggregate trackin)
+    // Collision is possible of course, but unlikely and suitable for most industry needs (e.g.. aggregate tracking)
     //
     if (_openUDID==nil) {
         unsigned char result[16];
@@ -89,11 +89,12 @@ static NSString * const kOpenUDID = @"com.OpenUDID.pboard";
     NSString *bundleid = [[NSBundle mainBundle] bundleIdentifier];
     UIPasteboard* openUDIDPasteboard = [UIPasteboard pasteboardWithName:kOpenUDID create:YES];
     [openUDIDPasteboard setPersistent:YES];
+    NSMutableDictionary* dict = nil;
     id item = [openUDIDPasteboard dataForPasteboardType:kOpenUDID];
-    NSMutableDictionary* dict = item && [item isKindOfClass:[NSDictionary class]]
-        ? [NSMutableDictionary dictionaryWithDictionary:[NSKeyedUnarchiver unarchiveObjectWithData:item]]
-        : nil;
-    // NSLog(@"OpenUDID: dict %@",dict);
+    if (item)
+        item = [NSKeyedUnarchiver unarchiveObjectWithData:item];
+    dict = [NSMutableDictionary dictionaryWithDictionary:(item == nil || [item isKindOfClass:[NSDictionary class]]) ? item : nil];
+    //NSLog(@"OpenUDID: dict %@",dict);
     
     // First check if the current bundleid is registered
     //
@@ -101,7 +102,7 @@ static NSString * const kOpenUDID = @"com.OpenUDID.pboard";
 	if (bundleidOptOut==nil) {		
         // bundleid could not be found, so let's register it
         // R is for registered, O is for opted-out...
-        // NSLog(@"OpenUDID: Registering %@",bundleid);
+        //NSLog(@"OpenUDID: Registering %@",bundleid);
         [dict setValue:@"R" forKey:bundleid];
         [openUDIDPasteboard setData:[NSKeyedArchiver archivedDataWithRootObject:dict] forPasteboardType:kOpenUDID];
     } else if ([bundleidOptOut isEqualToString:@"O"]) {
