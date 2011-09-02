@@ -29,33 +29,15 @@
 
 #import "OpenUDID.h"
 #import <CommonCrypto/CommonDigest.h> // Need to import for CC_MD5 access
+#import <UIKit/UIPasteboard.h>
 
-static NSString * const kOpenUDID = @"com.OpenUDID";
+static NSString * const kOpenUDID = @"com.OpenUDID.pboard";
 
 @interface OpenUDID (Private)
-+ (BOOL) _writeToKeychainValue:(NSString*)value forKey:(NSString*)key;
 + (NSString*) _getOpenUDID;
 @end
 
 @implementation OpenUDID
-
-// private method to write to the keychain
-//
-+ (BOOL) _writeToKeychainValue:(NSString*)value forKey:(NSString*)key  {
-    NSMutableDictionary* dict = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-                     (id) kSecClassGenericPassword, (id) kSecClass,
-                     kOpenUDID, kSecAttrService, 
-                     kOpenUDID, kSecAttrLabel, 
-                     key, kSecAttrAccount, 
-                     [value dataUsingEncoding: NSUTF8StringEncoding], kSecValueData, 
-                     nil];
-    if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 4.0) {
-        [dict setObject:(id)kSecAttrAccessibleAlwaysThisDeviceOnly forKey:(id)kSecAttrAccessible];
-    }
-    
-    OSStatus s = SecItemAdd((CFDictionaryRef) dict, NULL);    
-    return (s == noErr);
-}
 
 // private method to return the OpenUDID
 //
@@ -76,7 +58,7 @@ static NSString * const kOpenUDID = @"com.OpenUDID";
     
     // Next we try to use an alternative method which uses the host name, process ID, and a time stamp
     // We then hash it with md5 to get 32 bytes, and then add 4 extra random bytes
-    // Collision is possible of course, but unlikely and suitable for most industry needs (i.e. aggregating conversion for example)
+    // Collision is possible of course, but unlikely and suitable for most industry needs (e.g.. aggregate trackin)
     //
     if (_openUDID==nil) {
         unsigned char result[16];
@@ -104,74 +86,44 @@ static NSString * const kOpenUDID = @"com.OpenUDID";
 // Otherwise, it will register the current app and return the OpenUDID
 //
 + (NSString*) value {
-	OSStatus status;
-    NSMutableDictionary *item = nil;
-    NSDictionary *attributeResult = nil;
-    NSMutableDictionary *query = nil;
-	NSData *resultData = nil;
-    NSString* resultString = nil;
     NSString *bundleid = [[NSBundle mainBundle] bundleIdentifier];
-
+    UIPasteboard* openUDIDPasteboard = [UIPasteboard pasteboardWithName:kOpenUDID create:YES];
+    [openUDIDPasteboard setPersistent:YES];
+    id item = [openUDIDPasteboard dataForPasteboardType:kOpenUDID];
+    NSMutableDictionary* dict = item && [item isKindOfClass:[NSDictionary class]]
+        ? [NSMutableDictionary dictionaryWithDictionary:[NSKeyedUnarchiver unarchiveObjectWithData:item]]
+        : nil;
+    // NSLog(@"OpenUDID: dict %@",dict);
+    
     // First check if the current bundleid is registered
     //
-	item = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-            (id)kSecClassGenericPassword, (id) kSecClass,
-            bundleid,kSecAttrAccount,
-            kOpenUDID, kSecAttrService, nil];
-	attributeResult = nil;
-	query = [[item mutableCopy] autorelease];
-	[query setObject: (id) kCFBooleanTrue forKey:(id) kSecReturnAttributes];
-    status = SecItemCopyMatching((CFDictionaryRef) query, (CFTypeRef *) &attributeResult);
-	[attributeResult release];
-	
-	if (status != noErr) {		
+    NSString* bundleidOptOut = [dict objectForKey:bundleid];
+	if (bundleidOptOut==nil) {		
         // bundleid could not be found, so let's register it
         // R is for registered, O is for opted-out...
-        [OpenUDID _writeToKeychainValue:@"R" forKey:bundleid];
-    } else {
-        // bundleid found, let's find the value
-        resultData = nil;
-        query = [[item mutableCopy] autorelease];
-        [query setObject: (id) kCFBooleanTrue forKey: (id) kSecReturnData];
-        status = SecItemCopyMatching((CFDictionaryRef) query, (CFTypeRef *) &resultData);
-        resultString = [[[NSString alloc] initWithData: [resultData autorelease] encoding: NSUTF8StringEncoding] autorelease];
-        
-        // if the value is O, then the user has opted out, we return the null UDID...
-        if ([resultString isEqualToString:@"O"])
+        // NSLog(@"OpenUDID: Registering %@",bundleid);
+        [dict setValue:@"R" forKey:bundleid];
+        [openUDIDPasteboard setData:[NSKeyedArchiver archivedDataWithRootObject:dict] forPasteboardType:kOpenUDID];
+    } else if ([bundleidOptOut isEqualToString:@"O"]) {
+            // This app is opted-out, let's return the phantom OpenUDID (a bunch of zeros really - 40 to be exact)
+            // Developers need to take this *new* case into considerations and manage without a UDID at all... #privacy
             return [NSString stringWithFormat:@"%040x",0];
     }
     
     // Now, let's access the OpenUDID
-	item = [NSMutableDictionary dictionaryWithObjectsAndKeys:
-            (id)kSecClassGenericPassword, (id) kSecClass,
-            kOpenUDID,kSecAttrAccount,
-            kOpenUDID, kSecAttrService, nil];
-	attributeResult = nil;
-	query = [[item mutableCopy] autorelease];
-	[query setObject: (id) kCFBooleanTrue forKey:(id) kSecReturnAttributes];
-    status = SecItemCopyMatching((CFDictionaryRef) query, (CFTypeRef *) &attributeResult);
-	[attributeResult release];
-	
-	if (status != noErr) {
-        // Could not find the UDID, so let's generate it and store it, persistently.
-        resultString = [OpenUDID _getOpenUDID];
-        [OpenUDID _writeToKeychainValue:resultString forKey:kOpenUDID];
-        return resultString;
+    NSString* openUDID = [dict objectForKey:kOpenUDID];
+    
+    // Can't find it, let's generate and store
+	if (openUDID==nil) {
+        //NSLog(@"OpenUDID: Generate and store");
+        openUDID = [OpenUDID _getOpenUDID];
+        [dict setValue:openUDID forKey:kOpenUDID];
+        [openUDIDPasteboard setData:[NSKeyedArchiver archivedDataWithRootObject:dict] forPasteboardType:kOpenUDID];
+        return openUDID;
     }
     
-    // Let's fetch the value of the stored OpenUDID
-	resultData = nil;
-	query = [[item mutableCopy] autorelease];
-	[query setObject: (id) kCFBooleanTrue forKey: (id) kSecReturnData];
-	status = SecItemCopyMatching((CFDictionaryRef) query, (CFTypeRef *) &resultData);
-    resultString = [[[NSString alloc] initWithData: [resultData autorelease] encoding: NSUTF8StringEncoding] autorelease];
-	
-    // Found the key and obtained a value
-	if (status == noErr && resultData)
-		return resultString;
-    
-    // Error, let's return nil
-    return nil;
+    //NSLog(@"OpenUDID: %@ found",openUDID );
+    return openUDID;
 }
 
 @end
