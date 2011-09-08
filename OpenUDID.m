@@ -2,9 +2,16 @@
 //  OpenUDID.m
 //  openudid
 //
-//  Created by Yann Lechelle (cofounder Appsfire) on 8/28/11.
-//  Copyright 2011 OpenUDID.com
+//  initiated by Yann Lechelle (cofounder Appsfire) on 8/28/11.
+//  Copyright 2011 OpenUDID.org
 //
+//  iOS / MacOS implementation https://github.com/ylechelle/OpenUDID
+//  Android implementation : https://github.com/vvieux/OpenUDID
+//
+//  Contributors:
+//      https://github.com/ylechelle (initiator & iOS code)
+//      https://github.com/samrobbins (Mac OS port)
+//      https://github.com/vvieux (Android version)
 
 /*
  Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -29,7 +36,11 @@
 
 #import "OpenUDID.h"
 #import <CommonCrypto/CommonDigest.h> // Need to import for CC_MD5 access
+#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
 #import <UIKit/UIPasteboard.h>
+#else
+#import <AppKit/NSPasteboard.h>
+#endif
 
 static NSString * const kOpenUDID = @"com.OpenUDID.pboard";
 
@@ -45,9 +56,11 @@ static NSString * const kOpenUDID = @"com.OpenUDID.pboard";
     
     NSString* _openUDID = nil;
     
-    // One day, this may no longer be allowed. When that is, just comment this line out.
+    // One day, this may no longer be allowed in iOS. When that is, just comment this line out.
     //
+#if TARGET_OS_IPHONE	
     _openUDID = [[UIDevice currentDevice] uniqueIdentifier];
+#endif
 
     
     // Take this opportunity to give the simulator a proper UDID (i.e. nullify UDID and create an OpenUDID)
@@ -74,7 +87,11 @@ static NSString * const kOpenUDID = @"com.OpenUDID.pboard";
     }
     
     // Call to other developers in the Open Source community:
-    // feel free to add better or alternative "UDID" methods here.
+    //
+    // feel free to suggest better or alternative "UDID" generation code here.
+    // NOTE that the goal is NOT to find a better hash method, but rather, find a decentralized (i.e. not web-based)
+    // 160 bits / 20 bytes random string generator with the fewest possible collisions.
+    // 
 
     return _openUDID;
 }
@@ -87,12 +104,21 @@ static NSString * const kOpenUDID = @"com.OpenUDID.pboard";
 //
 + (NSString*) value {
     NSString *bundleid = [[NSBundle mainBundle] bundleIdentifier];
+#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
     UIPasteboard* openUDIDPasteboard = [UIPasteboard pasteboardWithName:kOpenUDID create:YES];
-    [openUDIDPasteboard setPersistent:YES];
+	[openUDIDPasteboard setPersistent:YES];
+#else
+	NSPasteboard* openUDIDPasteboard = [NSPasteboard pasteboardWithName:kOpenUDID];
+#endif
     NSMutableDictionary* dict = nil;
+#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR	
     id item = [openUDIDPasteboard dataForPasteboardType:kOpenUDID];
+#else
+	id item = [openUDIDPasteboard dataForType:kOpenUDID];
+#endif	
     if (item)
         item = [NSKeyedUnarchiver unarchiveObjectWithData:item];
+    
     dict = [NSMutableDictionary dictionaryWithDictionary:(item == nil || [item isKindOfClass:[NSDictionary class]]) ? item : nil];
     //NSLog(@"OpenUDID: dict %@",dict);
     
@@ -104,7 +130,11 @@ static NSString * const kOpenUDID = @"com.OpenUDID.pboard";
         // R is for registered, O is for opted-out...
         //NSLog(@"OpenUDID: Registering %@",bundleid);
         [dict setValue:@"R" forKey:bundleid];
+#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR		
         [openUDIDPasteboard setData:[NSKeyedArchiver archivedDataWithRootObject:dict] forPasteboardType:kOpenUDID];
+#else
+		[openUDIDPasteboard setData:[NSKeyedArchiver archivedDataWithRootObject:dict] forType:kOpenUDID];
+#endif		
     } else if ([bundleidOptOut isEqualToString:@"O"]) {
             // This app is opted-out, let's return the phantom OpenUDID (a bunch of zeros really - 40 to be exact)
             // Developers need to take this *new* case into considerations and manage without a UDID at all... #privacy
@@ -119,7 +149,11 @@ static NSString * const kOpenUDID = @"com.OpenUDID.pboard";
         //NSLog(@"OpenUDID: Generate and store");
         openUDID = [OpenUDID _getOpenUDID];
         [dict setValue:openUDID forKey:kOpenUDID];
+#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR		
         [openUDIDPasteboard setData:[NSKeyedArchiver archivedDataWithRootObject:dict] forPasteboardType:kOpenUDID];
+#else
+		[openUDIDPasteboard setData:[NSKeyedArchiver archivedDataWithRootObject:dict] forType:kOpenUDID];
+#endif		
         return openUDID;
     }
     
