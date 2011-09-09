@@ -42,9 +42,10 @@
 #endif
 
 //#define OpenUDIDLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
-//#define OpenUDIDLog(fmt, ...) NSLog((@"[Line %d] " fmt), __LINE__, ##__VA_ARGS__);
-#define OpenUDIDLog(fmt, ...)
+#define OpenUDIDLog(fmt, ...) NSLog((@"[Line %d] " fmt), __LINE__, ##__VA_ARGS__);
+//#define OpenUDIDLog(fmt, ...)
 
+static NSString * kOpenUDIDSessionCache = nil;
 static NSString * const kOpenUDIDKey = @"OpenUDID";
 static NSString * const kOpenUDIDSlotKey = @"OpenUDID_slot";
 static NSString * const kOpenUDIDBIDKey = @"OpenUDID_bundleid";
@@ -147,6 +148,15 @@ static int const kOpenUDIDRedundancySlots = 100;
     return [OpenUDID valueWithError:nil];
 }
 + (NSString*) valueWithError:(NSError **)error {
+
+    if (kOpenUDIDSessionCache!=nil) {
+        if (error!=nil)
+            *error = [NSError errorWithDomain:kOpenUDIDDomain
+                                         code:kOpenUDIDErrorNone
+                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"OpenUDID in cache from first call",@"description", nil]];
+        return kOpenUDIDSessionCache;
+    }
+
     
 	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSString *bundleid = [[NSBundle mainBundle] bundleIdentifier];
@@ -283,7 +293,8 @@ static int const kOpenUDIDRedundancySlots = 100;
                                                      code:kOpenUDIDErrorOptedOut
                                                  userInfo:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithFormat:@"Application %@ is opted-out from OpenUDID as of %@",bundleid,optedOutDate],@"description", nil]];
             
-        return [NSString stringWithFormat:@"%040x",0];
+        kOpenUDIDSessionCache = [[NSString stringWithFormat:@"%040x",0] retain];
+        return kOpenUDIDSessionCache;
     }
 
     // return the well earned openUDID!
@@ -298,7 +309,8 @@ static int const kOpenUDIDRedundancySlots = 100;
                                          code:kOpenUDIDErrorNone
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"OpenUDID succesfully retrieved",@"description", nil]];
     }
-    return openUDID;
+    kOpenUDIDSessionCache = [openUDID retain];
+    return kOpenUDIDSessionCache;
 }
 
 @end
