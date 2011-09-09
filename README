@@ -8,10 +8,10 @@ _/    _/  _/    _/  _/        _/    _/  _/    _/  _/    _/    _/    _/    _/
        _/                                                                        
 
 //  Created by Yann Lechelle (cofounder Appsfire) on 8/28/11.
-//  Copyright 2011 OpenUDID.com
+//  Copyright 2011 OpenUDID.org
 //
 Synopsis: an open source project to provide a universal and persistent
-          Unique Device IDentifier (UDID) solution for iOS and soon Android
+          Unique Device IDentifier (UDID) solution for iOS and Android
 
 Usage:
    #include "OpenUDID.h"
@@ -25,7 +25,7 @@ In the wake of Apple’s decision, some ad networks have already introduced thei
 
 The agenda was as follows:
 
- - Provide a reliable proxy and replacement for a universal unique device identifier. That is, persistent and sufficiently unique, on a per device basis.
+- Provide a reliable proxy and replacement for a universal unique device identifier. That is, persistent and sufficiently unique, on a per device basis.
 - Enable OpenUDID to be accessed by any app
 - Supply open-source code to generate and access the OpenUDID, for iOS and soon Android
 - Incorporate, from the beginning, a system that will enable user opt-out to match Apple’s initial intent

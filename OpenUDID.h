@@ -2,9 +2,16 @@
 //  OpenUDID.h
 //  openudid
 //
-//  Created by Yann Lechelle (cofounder Appsfire) on 8/28/11.
-//  Copyright 2011 OpenUDID.com
+//  initiated by Yann Lechelle (cofounder Appsfire) on 8/28/11.
+//  Copyright 2011 OpenUDID.org
 //
+//  iOS / MacOS code: https://github.com/ylechelle/OpenUDID
+//  Android code: https://github.com/vvieux/OpenUDID
+//
+//  Contributors:
+//      https://github.com/ylechelle (initiator & iOS code)
+//      https://github.com/samrobbins (Mac OS port)
+//      https://github.com/vvieux (Android version)
 
 /*
  Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -24,19 +31,23 @@
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
- */
+*/
 
 #import <Foundation/Foundation.h>
 
-// README
 //
-// Requirement: add Security.framework to your project
 // Usage:
 //    #include "OpenUDID.h"
 //    NSString* openUDID = [OpenUDID value];
+//
 
+#define kOpenUDIDErrorNone          0
+#define kOpenUDIDErrorOptedOut      1
+#define kOpenUDIDErrorCompromised   2
 
 @interface OpenUDID : NSObject {
 }
 + (NSString*) value;
++ (NSString*) valueWithError:(NSError**)error;
+
 @end
