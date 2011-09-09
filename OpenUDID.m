@@ -42,8 +42,8 @@
 #endif
 
 //#define OpenUDIDLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
-#define OpenUDIDLog(fmt, ...) NSLog((@"[Line %d] " fmt), __LINE__, ##__VA_ARGS__);
-//#define OpenUDIDLog(fmt, ...)
+//#define OpenUDIDLog(fmt, ...) NSLog((@"[Line %d] " fmt), __LINE__, ##__VA_ARGS__);
+#define OpenUDIDLog(fmt, ...)
 
 static NSString * kOpenUDIDSessionCache = nil;
 static NSString * const kOpenUDIDKey = @"OpenUDID";
