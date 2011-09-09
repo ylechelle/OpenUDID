@@ -6,12 +6,12 @@
 //  Copyright 2011 OpenUDID.org
 //
 //  iOS / MacOS code: https://github.com/ylechelle/OpenUDID
-//  Android code: https://github.com/vvieux/OpenUDID
+//  Android code: https://github.com/vieux/OpenUDID
 //
 //  Contributors:
 //      https://github.com/ylechelle (initiator & iOS code)
 //      https://github.com/samrobbins (Mac OS port)
-//      https://github.com/vvieux (Android version)
+//      https://github.com/vieux (Android version)
 
 /*
  Permission is hereby granted, free of charge, to any person obtaining a copy of
