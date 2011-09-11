@@ -37,6 +37,7 @@
 #import <CommonCrypto/CommonDigest.h> // Need to import for CC_MD5 access
 #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
 #import <UIKit/UIPasteboard.h>
+#import <UIKit/UIKit.h>
 #else
 #import <AppKit/NSPasteboard.h>
 #endif
