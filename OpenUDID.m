@@ -103,7 +103,10 @@ static int const kOpenUDIDRedundancySlots = 100;
     // One day, this may no longer be allowed in iOS. When that is, just comment this line out.
     //
 #if TARGET_OS_IPHONE	
-    _openUDID = [[UIDevice currentDevice] uniqueIdentifier];
+    if([UIDevice instancesRespondToSelector:@selector(uniqueIdentifier)]){
+        _openUDID = [[UIDevice currentDevice] uniqueIdentifier];
+    }
+    
 #endif
     
     // Take this opportunity to give the simulator a proper UDID (i.e. nullify UDID and create an OpenUDID)
