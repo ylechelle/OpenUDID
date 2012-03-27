@@ -44,6 +44,7 @@
 #define kOpenUDIDErrorNone          0
 #define kOpenUDIDErrorOptedOut      1
 #define kOpenUDIDErrorCompromised   2
+#define kOpenUDIDErrorMultiple      3
 
 @interface OpenUDID : NSObject {
 }
