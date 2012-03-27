@@ -35,6 +35,8 @@
 
 #import "OpenUDID.h"
 #import <CommonCrypto/CommonDigest.h> // Need to import for CC_MD5 access
+#import "KeychainItemWrapper.h"
+
 #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
 #import <UIKit/UIPasteboard.h>
 #import <UIKit/UIKit.h>
@@ -55,6 +57,7 @@ static NSString * const kOpenUDIDOOTSKey = @"OpenUDID_optOutTS";
 static NSString * const kOpenUDIDDomain = @"org.OpenUDID";
 static NSString * const kOpenUDIDSlotPBPrefix = @"org.OpenUDID.slot.";
 static int const kOpenUDIDRedundancySlots = 100;
+static KeychainItemWrapper* keychain = nil;
 
 @interface OpenUDID (Private)
 + (void) _setDict:(id)dict forPasteboard:(id)pboard;
@@ -170,6 +173,7 @@ static int const kOpenUDIDRedundancySlots = 100;
     BOOL optedOut = NO;
     BOOL saveLocalDictToDefaults = NO;
     BOOL isCompromised = NO;
+    BOOL isMultiples = NO;
     
     // Do we have a local copy of the OpenUDID dictionary?
     // This local copy contains a copy of the openUDID, myRedundancySlotPBid (and unused in this block, the local bundleid, and the timestamp)
@@ -226,19 +230,52 @@ static int const kOpenUDIDRedundancySlots = 100;
     NSArray* arrayOfUDIDs = [frequencyDict keysSortedByValueUsingSelector:@selector(compare:)];
     NSString* mostReliableOpenUDID = (arrayOfUDIDs!=nil && [arrayOfUDIDs count]>0)? [arrayOfUDIDs lastObject] : nil;
     OpenUDIDLog(@"Freq Dict = %@\nMost reliable %@",frequencyDict,mostReliableOpenUDID);
-        
+      
+    if( keychain == nil )
+        keychain = [[KeychainItemWrapper alloc]initWithIdentifier:kOpenUDIDKey accessGroup:nil];
+    
+    NSString* keyChainUDID = [keychain objectForKey:(id)kSecValueData];
+    OpenUDIDLog(@"Keychain UDID = %@", keyChainUDID);
+    
     // if openUDID was not retrieved from the local preferences, then let's try to get it from the frequency dictionary above
     //
     if (openUDID==nil) {        
         if (mostReliableOpenUDID==nil) {
-            // this is the case where this app instance is likely to be the first one to use OpenUDID on this device
-            // we create the OpenUDID, legacy or semi-random (i.e. most certainly unique)
+            // This is the case where this app instance is likely to be the first one to use OpenUDID on this device.
+            // First, check to see if THIS app has created an OpenUDID previously and stored it into the keychain.
+            // If not, we create the new OpenUDID, legacy or semi-random (i.e. most certainly unique)
             //
-            openUDID = [OpenUDID _getOpenUDID];
+            openUDID = keyChainUDID;
+            if( [openUDID length] == 0 )
+                openUDID = [OpenUDID _getOpenUDID];
+            
         } else {
-            // or we leverage the OpenUDID shared by other apps that have already gone through the process
-            // 
-            openUDID = mostReliableOpenUDID;
+            // Or we leverage the OpenUDID shared by other apps that have already gone through the process
+            // HOWEVER, if the keychain stored UDID is present, favor that value for consistency across 
+            // application installs in THIS app and mark the value as multiples (for now)
+            // NOTE: In future, we need to come up with a way to handle this case more elegantly... how to sync
+            // these values when a new OpenUDID is generated between existing application installs?
+            //
+            if( [mostReliableOpenUDID isEqualToString:keyChainUDID] && [keyChainUDID length] > 0 )
+            {
+                // Equal and life is good.
+                openUDID = mostReliableOpenUDID;
+            }
+            else if( [keyChainUDID length] > 0 )
+            {
+                // Keychain value and stored value are different.  This could occur if this app was originally installed
+                // and then removed.  Before this app was reinstalled, a new OpenUDID enabled app created a new value.
+                // Now this app is reinstalled.  For consistency in THIS app, deferring to the keychain value.  In future
+                // Need to find some way to handle this case more elegantly.
+                openUDID = keyChainUDID;
+                isMultiples = YES;
+            }
+            else
+            {
+                // Don't have a keychain value yet... so this is the first time this app has been installed
+                // Defer to the previously saved OpenUDID and store it in the keychain for this app.
+                openUDID = mostReliableOpenUDID;
+            }
         }
         // then we create a local representation
         //
@@ -286,6 +323,10 @@ static int const kOpenUDIDRedundancySlots = 100;
     //
     if (localDict && saveLocalDictToDefaults)
         [defaults setObject:localDict forKey:kOpenUDIDKey];
+    
+    // Save the OpenUDID to the keychain if needed
+    if( [[keychain objectForKey:(id)kSecValueData]length] == 0 )
+        [keychain setObject:openUDID forKey:(id)kSecValueData];
 
     // If the UIPasteboard externa representation marks this app as opted-out, then to respect privacy, we return the ZERO OpenUDID, a sequence of 40 zeros...
     // This is a *new* case that developers have to deal with. Unlikely, statistically low, but still.
@@ -308,6 +349,10 @@ static int const kOpenUDIDRedundancySlots = 100;
             *error = [NSError errorWithDomain:kOpenUDIDDomain
                                          code:kOpenUDIDErrorCompromised
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Found a discrepancy between stored OpenUDID (reliable) and redundant copies; one of the apps on the device is most likely corrupting the OpenUDID protocol",@"description", nil]];
+        else if( isMultiples )
+            *error = [NSError errorWithDomain:kOpenUDIDDomain
+                                         code:kOpenUDIDErrorMultiple
+                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Found multiple OpenUDID values (keychain vs cross-application stores). This occurs when all OpenUDID-enabled apps are removed, a new one is installed, and then a previous app is reinstalled",@"description", nil]];
         else
             *error = [NSError errorWithDomain:kOpenUDIDDomain
                                          code:kOpenUDIDErrorNone
