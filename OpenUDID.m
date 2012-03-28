@@ -49,11 +49,12 @@
 static NSString * kOpenUDIDSessionCache = nil;
 static NSString * const kOpenUDIDKey = @"OpenUDID";
 static NSString * const kOpenUDIDSlotKey = @"OpenUDID_slot";
-static NSString * const kOpenUDIDBIDKey = @"OpenUDID_bundleid";
+static NSString * const kOpenUDIDGIDKey = @"OpenUDID_guuid";
 static NSString * const kOpenUDIDTSKey = @"OpenUDID_createdTS";
 static NSString * const kOpenUDIDOOTSKey = @"OpenUDID_optOutTS";
 static NSString * const kOpenUDIDDomain = @"org.OpenUDID";
 static NSString * const kOpenUDIDSlotPBPrefix = @"org.OpenUDID.slot.";
+static NSString * const kAppGUUID = @"app_guuid";
 static int const kOpenUDIDRedundancySlots = 100;
 
 @interface OpenUDID (Private)
@@ -162,8 +163,16 @@ static int const kOpenUDIDRedundancySlots = 100;
     }
 
     
-	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSString *bundleid = [[NSBundle mainBundle] bundleIdentifier];
+  	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString * guuid = (NSString *) [defaults objectForKey:kAppGUUID];
+    if(guuid == nil)
+    {
+      //generate a new uuid and store it in user defaults
+      CFUUIDRef uuid = CFUUIDCreate(NULL);
+      guuid = (NSString *) CFUUIDCreateString(NULL, uuid);
+      CFRelease(uuid);
+    }
+  
     NSString* openUDID = nil;
     NSString* myRedundancySlotPBid = nil;
     NSDate* optedOutDate = nil;
@@ -211,8 +220,8 @@ static int const kOpenUDIDRedundancySlots = 100;
                 [frequencyDict setObject:[NSNumber numberWithInt:++count] forKey:oudid];
             }
             // if we have a match with the bundleid, then let's look if the external UIPasteboard representation marks this app as OptedOut
-            NSString* bid = [dict objectForKey:kOpenUDIDBIDKey];
-            if (bid!=nil && [bid isEqualToString:bundleid]) {
+            NSString* gid = [dict objectForKey:kOpenUDIDGIDKey];
+            if (gid!=nil && [gid isEqualToString:guuid]) {
                 myRedundancySlotPBid = slotPBid;
                 optedOutDate = [dict objectForKey:kOpenUDIDOOTSKey];
                 optedOut = optedOutDate!=nil;
@@ -245,7 +254,7 @@ static int const kOpenUDIDRedundancySlots = 100;
         if (localDict==nil) { 
             localDict = [NSMutableDictionary dictionaryWithCapacity:4];
             [localDict setObject:openUDID forKey:kOpenUDIDKey];
-            [localDict setObject:bundleid forKey:kOpenUDIDBIDKey];
+            [localDict setObject:guuid forKey:kOpenUDIDGIDKey];
             [localDict setObject:[NSDate date] forKey:kOpenUDIDTSKey];
             if (optedOut) [localDict setObject:optedOutDate forKey:kOpenUDIDTSKey];
             saveLocalDictToDefaults = YES;
@@ -295,7 +304,7 @@ static int const kOpenUDIDRedundancySlots = 100;
     if (optedOut) {
         if (error!=nil) *error = [NSError errorWithDomain:kOpenUDIDDomain
                                                      code:kOpenUDIDErrorOptedOut
-                                                 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithFormat:@"Application %@ is opted-out from OpenUDID as of %@",bundleid,optedOutDate],@"description", nil]];
+                                                 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithFormat:@"Application with GUUID %@ is opted-out from OpenUDID as of %@",guuid,optedOutDate],@"description", nil]];
             
         kOpenUDIDSessionCache = RETAIN(([NSString stringWithFormat:@"%040x",0]));
         return kOpenUDIDSessionCache;
