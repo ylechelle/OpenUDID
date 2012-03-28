@@ -45,6 +45,26 @@
 #define kOpenUDIDErrorOptedOut      1
 #define kOpenUDIDErrorCompromised   2
 
+//
+// Support for ARC
+//
+
+#if __has_feature(objc_arc)
+
+#define HAS_ARC 1
+#define RETAIN(_o) (_o)
+#define RELEASE(_o) 
+#define AUTORELEASE(_o) (_o)
+
+#else
+
+#define HAS_ARC 0
+#define RETAIN(_o) [(_o) retain]
+#define RELEASE(_o) [(_o) release]
+#define AUTORELEASE(_o) [(_o) autorelease]
+
+#endif
+
 @interface OpenUDID : NSObject {
 }
 + (NSString*) value;
