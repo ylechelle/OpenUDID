@@ -10,13 +10,15 @@ _/    _/  _/    _/  _/        _/    _/  _/    _/  _/    _/    _/    _/    _/
 //  initiated by Yann Lechelle (cofounder Appsfire) on 8/28/11.
 //  Copyright 2011 OpenUDID.org
 //
-//  iOS / MacOS code: https://github.com/ylechelle/OpenUDID
-//  Android code: https://github.com/vieux/OpenUDID
+//  Master Branches
+//	iOS / MacOS code: https://github.com/ylechelle/OpenUDID
+//	Android code: https://github.com/vieux/OpenUDID
 //
 //  Contributors:
 //      https://github.com/ylechelle (initiator & iOS code)
-//      https://github.com/samrobbins (Mac OS port)
+//	https://github.com/kajinka13 (Obj-C ARC support)
 //      https://github.com/vieux (Android version)
+//      https://github.com/samrobbins (Mac OS port)
 
 Synopsis: an open source project to provide a universal and persistent
           Unique Device IDentifier (UDID) solution for iOS and Android
