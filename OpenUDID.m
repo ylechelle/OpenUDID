@@ -33,6 +33,10 @@
  SOFTWARE.
 */
 
+#if ! __has_feature(objc_arc)
+#error This file requires ARC to be enabled. Either enable ARC for the entire project or use -fobjc-arc flag.
+#endif
+
 #import "OpenUDID.h"
 #import <CommonCrypto/CommonDigest.h> // Need to import for CC_MD5 access
 #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
@@ -175,7 +179,7 @@ static int const kOpenUDIDRedundancySlots = 100;
     {
       //generate a new uuid and store it in user defaults
       CFUUIDRef uuid = CFUUIDCreate(NULL);
-      guuid = (NSString *) CFUUIDCreateString(NULL, uuid);
+      guuid = (__bridge_transfer NSString *) CFUUIDCreateString(NULL, uuid);
       CFRelease(uuid);
     }
   
@@ -312,7 +316,7 @@ static int const kOpenUDIDRedundancySlots = 100;
                                                      code:kOpenUDIDErrorOptedOut
                                                  userInfo:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithFormat:@"Application with GUUID %@ is opted-out from OpenUDID as of %@",guuid,optedOutDate],@"description", nil]];
             
-        kOpenUDIDSessionCache = RETAIN(([NSString stringWithFormat:@"%040x",0]));
+        kOpenUDIDSessionCache = ([NSString stringWithFormat:@"%040x",0]);
         return kOpenUDIDSessionCache;
     }
 
@@ -328,7 +332,7 @@ static int const kOpenUDIDRedundancySlots = 100;
                                          code:kOpenUDIDErrorNone
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"OpenUDID succesfully retrieved",@"description", nil]];
     }
-    kOpenUDIDSessionCache = RETAIN(openUDID);
+    kOpenUDIDSessionCache = openUDID;
     return kOpenUDIDSessionCache;
 }
 
