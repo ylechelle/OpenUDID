@@ -85,8 +85,14 @@ static int const kOpenUDIDRedundancySlots = 100;
 #else
 	id item = [pboard dataForType:kOpenUDIDDomain];
 #endif	
-    if (item)
-        item = [NSKeyedUnarchiver unarchiveObjectWithData:item];
+    if (item) {
+        @try{
+            item = [NSKeyedUnarchiver unarchiveObjectWithData:item];
+        } @catch(NSException* e) {
+            OpenUDIDLog(@"Unable to unarchive item %@ on pasteboard!", [pboard name]);
+            item = nil;
+        }
+    }
     
     // return an instance of a MutableDictionary 
     return [NSMutableDictionary dictionaryWithDictionary:(item == nil || [item isKindOfClass:[NSDictionary class]]) ? item : nil];
