@@ -37,7 +37,14 @@
 */
 
 #if ! __has_feature(objc_arc)
-#error This file requires ARC to be enabled. Either enable ARC for the entire project or use -fobjc-arc flag.
+#error This file requires ARC to be enabled; instructions below... 
+    // Either enable ARC for the entire project or use -fobjc-arc flag.
+    // First make sure to use the Apple LLVM compiler like so:
+    //          https://img.skitch.com/20120330-p3xtsq9khu6wy3c3uxrgrkdw1u.png
+    // Then, decide whether your entire project is ARC enabled, like so:
+    //          https://img.skitch.com/20120330-18xt67f8uy9wsgsgpx16td8xwa.png
+    // Or selectively compile this file with ARC, like so:
+    //          https://img.skitch.com/20120330-j5tqhjtgixxcmfjk4kq6j5ge8t.png
 #endif
 
 #import "OpenUDID.h"
