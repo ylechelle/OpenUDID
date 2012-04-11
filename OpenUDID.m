@@ -36,15 +36,10 @@
  distribution.
 */
 
-#if ! __has_feature(objc_arc)
-#error This file requires ARC to be enabled; instructions below... 
-    // Either enable ARC for the entire project or use -fobjc-arc flag.
-    // First make sure to use the Apple LLVM compiler like so:
-    //          https://img.skitch.com/20120330-p3xtsq9khu6wy3c3uxrgrkdw1u.png
-    // Then, decide whether your entire project is ARC enabled, like so:
-    //          https://img.skitch.com/20120330-18xt67f8uy9wsgsgpx16td8xwa.png
-    // Or selectively compile this file with ARC, like so:
-    //          https://img.skitch.com/20120330-j5tqhjtgixxcmfjk4kq6j5ge8t.png
+#if __has_feature(objc_arc)
+#error This file uses the classic non-ARC retain/release model; hints below... 
+    // to selectively compile this file as non-ARC, do as follows:
+    // https://img.skitch.com/20120411-bcku69k1uw528cwh9frh5px8ya.png
 #endif
 
 #import "OpenUDID.h"
@@ -326,7 +321,7 @@ static int const kOpenUDIDRedundancySlots = 100;
                                                      code:kOpenUDIDErrorOptedOut
                                                  userInfo:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithFormat:@"Application with GUUID %@ is opted-out from OpenUDID as of %@",guuid,optedOutDate],@"description", nil]];
             
-        kOpenUDIDSessionCache = ([NSString stringWithFormat:@"%040x",0]);
+        kOpenUDIDSessionCache = [[NSString stringWithFormat:@"%040x",0] retain];
         return kOpenUDIDSessionCache;
     }
 
@@ -342,7 +337,7 @@ static int const kOpenUDIDRedundancySlots = 100;
                                          code:kOpenUDIDErrorNone
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"OpenUDID succesfully retrieved",@"description", nil]];
     }
-    kOpenUDIDSessionCache = openUDID;
+    kOpenUDIDSessionCache = [openUDID retain];
     return kOpenUDIDSessionCache;
 }
 
