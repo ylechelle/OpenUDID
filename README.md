@@ -1,7 +1,9 @@
-![image](http://f.cl.ly/items/2K47303k0E1s1Z0N3B1M/Picture%202012-04-11%20at%204.54.44%20PM.png)
+	IMPORTANT: IF YOU ARE GOING TO INTEGRATE OpenUDID INSIDE A (STATIC) LIBRARY, PLEASE MAKE SURE YOU REFACTOR THE OpenUDID CLASS WITH A PREFIX OF YOUR OWN, E.G. ACME_OpenUDID. THIS WILL AVOID CONFUSION BY DEVELOPERS WHO ARE ALSO USING OpenUDID IN THEIR OWN CODE. 
+
+![image](http://appsfire.com/images/misc/OpenUDID_Industry_supporters.png)
 
 ####Who is behind SecureUDID
-The project was initiated by Yann Lechelle (cofounder Appsfire) on 8/28/11.
+The project was initiated by Yann Lechelle (co-founder Appsfire) on 8/28/11.
 
 ####Master Branches & Contributors
 - iOS / MacOS code: https://github.com/ylechelle/OpenUDID
@@ -15,7 +17,7 @@ Please browse this github projects to discover the many contributors (discussion
 	NSString* openUDID = [OpenUDID value];
 
 ####Synopsis
-OpenUDID is a drop-in replacement for the deprecated [UIDevice uniqueIdentifier] a.k.a. UDID on iOS, and otherwise is an industry-friendly equivalent for iOS and Android.
+OpenUDID is a drop-in replacement for the deprecated uniqueIdentifier property of the UIDevice class on iOS (a.k.a. UDID) and otherwise is an industry-friendly equivalent for iOS and Android.
 
 The agenda for this community driven project is to:
 - Provide a reliable proxy and replacement for a universal unique device identifier. That is, persistent and sufficiently unique, on a per device basis.
