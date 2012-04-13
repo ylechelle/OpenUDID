@@ -5,13 +5,21 @@
 //  initiated by Yann Lechelle (cofounder @Appsfire) on 8/28/11.
 //  Copyright 2011 OpenUDID.org
 //
-//  Initiators/root branches
+//  Main branches
 //      iOS code: https://github.com/ylechelle/OpenUDID
-//      Android code: https://github.com/vieux/OpenUDID
 //
-//  Contributors:
-//      https://github.com/ylechelle/OpenUDID/contributors
-//
+
+/*
+    !!! IMPORTANT !!!
+
+    IF YOU ARE GOING TO INTEGRATE OpenUDID INSIDE A (STATIC) LIBRARY,
+    PLEASE MAKE SURE YOU REFACTOR THE OpenUDID CLASS WITH A PREFIX OF YOUR OWN,
+    E.G. ACME_OpenUDID. THIS WILL AVOID CONFUSION BY DEVELOPERS WHO ARE ALSO
+    USING OpenUDID IN THEIR OWN CODE. 
+
+    !!! IMPORTANT !!!
+
+*/
 
 /*
  http://en.wikipedia.org/wiki/Zlib_License
