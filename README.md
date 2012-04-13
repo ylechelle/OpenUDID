@@ -1,15 +1,24 @@
-	IMPORTANT: IF YOU ARE GOING TO INTEGRATE OpenUDID INSIDE A (STATIC) LIBRARY, PLEASE MAKE SURE YOU REFACTOR THE OpenUDID CLASS WITH A PREFIX OF YOUR OWN, E.G. ACME_OpenUDID. THIS WILL AVOID CONFUSION BY DEVELOPERS WHO ARE ALSO USING OpenUDID IN THEIR OWN CODE. 
+	IMPORTANT: IF YOU ARE GOING TO INTEGRATE OpenUDID INSIDE A (STATIC) LIBRARY,
+	PLEASE MAKE SURE YOU REFACTOR THE OpenUDID CLASS WITH A PREFIX OF YOUR OWN,
+	E.G. ACME_OpenUDID. THIS WILL AVOID CONFUSION BY DEVELOPERS WHO ARE ALSO
+	USING OpenUDID IN THEIR OWN CODE. 
 
 ![image](http://appsfire.com/images/misc/OpenUDID_Industry_supporters.png)
 
 ####Who is behind SecureUDID
-The project was initiated by Yann Lechelle (co-founder Appsfire) on 8/28/11.
+The project was initiated by Yann Lechelle (co-founder Appsfire) on 8/28/11
+
+- https://github.com/ylechelle
 
 ####Master Branches & Contributors
 - iOS / MacOS code: https://github.com/ylechelle/OpenUDID
 - Android code: https://github.com/vieux/OpenUDID
 
 Please browse this github projects to discover the many contributors (discussions, code, pull requests, alternative branches, etc…)
+
+- https://github.com/ylechelle/OpenUDID/network
+- https://github.com/ylechelle/OpenUDID/contributors
+- https://github.com/ylechelle/OpenUDID/issues
 
 ####Usage
 
