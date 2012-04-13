@@ -5,7 +5,7 @@
 
 ![image](http://appsfire.com/images/misc/OpenUDID_Industry_supporters.png)
 
-####Who is behind SecureUDID
+####Who is behind OpenUDID
 The project was initiated by Yann Lechelle (co-founder Appsfire) on 8/28/11
 
 - https://github.com/ylechelle
