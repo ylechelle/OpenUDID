@@ -13,6 +13,7 @@ The project was initiated by Yann Lechelle (co-founder Appsfire) on 8/28/11
 ####Master Branches & Contributors
 - iOS / MacOS code: https://github.com/ylechelle/OpenUDID
 - Android code: https://github.com/vieux/OpenUDID
+- CSharp.Net & SilverLight: https://github.com/jasonlamkk/OpenUDID.Net
 
 Please browse this github projects to discover the many contributors (discussions, code, pull requests, alternative branches, etc…)
 
@@ -26,7 +27,7 @@ Please browse this github projects to discover the many contributors (discussion
 	NSString* openUDID = [OpenUDID value];
 
 ####Synopsis
-OpenUDID is a drop-in replacement for the deprecated uniqueIdentifier property of the UIDevice class on iOS (a.k.a. UDID) and otherwise is an industry-friendly equivalent for iOS and Android.
+OpenUDID is a drop-in replacement for the deprecated uniqueIdentifier property of the UIDevice class on iOS (a.k.a. UDID) and otherwise is an industry-friendly equivalent for iOS and Android, **and most recently Windows C# and Silverlight (see links above)**.
 
 The agenda for this community driven project is to:
 - Provide a reliable proxy and replacement for a universal unique device identifier. That is, persistent and sufficiently unique, on a per device basis.
@@ -46,4 +47,4 @@ In the wake of Apple’s decision to deprecate UDID, some ad networks have alrea
 - March. 25 2012: removing all traces of the offending call on iOS
 
 ####Contributions needed
-Equivalent OpenUDID systems on Windows Mobile 7/8, Blackberry, Windows .Net, etc...
+Equivalent OpenUDID systems on Blackberry, other platforms, etc...
