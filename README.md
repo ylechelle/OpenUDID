@@ -3,9 +3,9 @@
 	E.G. ACME_OpenUDID. THIS WILL AVOID CONFUSION BY DEVELOPERS WHO ARE ALSO
 	USING OpenUDID IN THEIR OWN CODE. 
 
-![image](http://appsfire.com/images/misc/OpenUDID_Industry_supporters.png)
+![image](http://appsfire.com/images/misc/OpenUDID_Industry_supporters_2.png)
 
-####Follow OpenUDID on twitter
+####Follow OpenUDID on Twitter
 http://twitter.com/OpenUDID
 
 ####Who is behind OpenUDID
