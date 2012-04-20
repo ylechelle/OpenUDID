@@ -5,21 +5,24 @@
 
 ![image](http://appsfire.com/images/misc/OpenUDID_Industry_supporters.png)
 
+####Follow OpenUDID on twitter
+http://twitter.com/OpenUDID
+
 ####Who is behind OpenUDID
 The project was initiated by Yann Lechelle (co-founder Appsfire) on 8/28/11
 
 - https://github.com/ylechelle
 
-####Master Branches & Contributors
-- iOS / MacOS code: https://github.com/ylechelle/OpenUDID
-- Android code: https://github.com/vieux/OpenUDID
-- CSharp.Net & SilverLight: https://github.com/jasonlamkk/OpenUDID.Net
-
-Please browse this github projects to discover the many contributors (discussions, code, pull requests, alternative branches, etc…)
+Many have joined the effort since. Please browse this github projects to discover the many contributors (discussions, code, pull requests, alternative branches, etc…)
 
 - https://github.com/ylechelle/OpenUDID/network
 - https://github.com/ylechelle/OpenUDID/contributors
 - https://github.com/ylechelle/OpenUDID/issues
+
+####Master Branches & ports to other OSes
+- iOS / MacOS code: https://github.com/ylechelle/OpenUDID
+- Android code: https://github.com/vieux/OpenUDID
+- CSharp.Net & SilverLight: https://github.com/jasonlamkk/OpenUDID.Net
 
 ####Usage
 
@@ -37,9 +40,9 @@ The agenda for this community driven project is to:
 - Incorporate, from the beginning, a system that will enable user opt-out to match Apple’s initial intent
 
 ####Context
-If you’re not already familiar with UDID’s, it’s a critical tool for analytic or CRM purposes. A developer could use UDID’s as a means to track how much time a user spent in his free app before upgrading to the paid version. UDID’s are also helpful for tracking the source of a download when advertising on an ad network. This is a fairly universal need in a thriving ecosystem: developers need the traceability from clicks to downloads to ensure that they pay the right price for their promotion. Proper tracking and funnel conversion is what has made the web a better place, with healthy competition and quantifiable metrics.
+If you’re not already familiar with UDID’s, it’s a critical piece of information used for analytics or CRM purposes. A developer could use a UDID as a means to track how much time a user spent in his free app before upgrading to the paid version. UDIDs are also helpful for tracking the source of a download when advertising on an ad network. This is a fairly universal need in a thriving ecosystem: developers need the traceability from clicks to downloads to ensure that they pay the right price for their promotion. Proper tracking and funnel conversion is what has made the web a better place, with healthy competition and quantifiable metrics.
 
-In the wake of Apple’s decision to deprecate UDID, some ad networks have already introduced their own proprietary solutions. The main motivation here was to find a UDID replacement not owned by any single provider. It is easy to foresee a fragmented market where UDID management is operated by multiple providers with no cooperation between them. This open source initiative is to enable a better solution for thousands of other mobile app developers.
+In the wake of Apple’s decision to deprecate UDID, some ad networks have already introduced their own proprietary solutions or worse adopted a low hanging fruit like the MAC address. The main motivation here was to find a UDID replacement not owned by any single provider, not bound to the device in the hardware sense. This open source initiative is to enable a better solution for thousands of other mobile app developers.
 
 #####Version History
 - August 2011: launch of the initiative
