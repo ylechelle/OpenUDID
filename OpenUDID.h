@@ -60,5 +60,6 @@
 }
 + (NSString*) value;
 + (NSString*) valueWithError:(NSError**)error;
++ (void) setOptOut:(BOOL)optOutValue;
 
 @end
