@@ -51,3 +51,8 @@ In the wake of Apple’s decision to deprecate UDID, some ad networks have alrea
 
 ####Contributions needed
 Equivalent OpenUDID systems on Blackberry, other platforms, etc...
+
+####Seals to add on your sites if you use OpenUDID
+![image](http://appsfire.com/images/misc/openudid_seal_large.png)
+![image](http://appsfire.com/images/misc/openudid_seal_medium.png)
+![image](http://appsfire.com/images/misc/openudid_seal_small.png)
