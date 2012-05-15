@@ -36,6 +36,35 @@
  distribution.
 */
 
+#pragma mark -
+#pragma mark Apple KeychainItemWrapper declaration - Included inline
+
+/*
+ The KeychainItemWrapper class is an abstraction layer for the iPhone Keychain communication. It is merely a 
+ simple wrapper to provide a distinct barrier between all the idiosyncracies involved with the Keychain
+ CF/NS container objects.
+ */
+@interface OpenUDID_KeychainItemWrapper : NSObject
+{
+    NSMutableDictionary *keychainItemData;      // The actual keychain item data backing store.
+    NSMutableDictionary *genericPasswordQuery;  // A placeholder for the generic keychain item query used to locate the item.
+}
+
+@property (nonatomic, retain) NSMutableDictionary *keychainItemData;
+@property (nonatomic, retain) NSMutableDictionary *genericPasswordQuery;
+
+// Designated initializer.
+- (id)initWithIdentifier: (NSString *)identifier accessGroup:(NSString *) accessGroup;
+- (void)setObject:(id)inObject forKey:(id)key;
+- (id)objectForKey:(id)key;
+
+// Initializes and resets the default generic keychain item data.
+- (void)resetKeychainItem;
+
+@end
+
+#pragma mark - 
+
 #if __has_feature(objc_arc)
 #error This file uses the classic non-ARC retain/release model; hints below... 
     // to selectively compile this file as non-ARC, do as follows:
@@ -44,6 +73,7 @@
 
 #import "OpenUDID.h"
 #import <CommonCrypto/CommonDigest.h> // Need to import for CC_MD5 access
+
 #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
 #import <UIKit/UIPasteboard.h>
 #import <UIKit/UIKit.h>
@@ -64,6 +94,7 @@ static NSString * const kOpenUDIDOOTSKey = @"OpenUDID_optOutTS";
 static NSString * const kOpenUDIDDomain = @"org.OpenUDID";
 static NSString * const kOpenUDIDSlotPBPrefix = @"org.OpenUDID.slot.";
 static int const kOpenUDIDRedundancySlots = 100;
+static OpenUDID_KeychainItemWrapper* keychain = nil;
 
 @interface OpenUDID (Private)
 + (void) _setDict:(id)dict forPasteboard:(id)pboard;
@@ -187,6 +218,7 @@ static int const kOpenUDIDRedundancySlots = 100;
     BOOL optedOut = NO;
     BOOL saveLocalDictToDefaults = NO;
     BOOL isCompromised = NO;
+    BOOL isMultiples = NO;
     
     // Do we have a local copy of the OpenUDID dictionary?
     // This local copy contains a copy of the openUDID, myRedundancySlotPBid (and unused in this block, the local bundleid, and the timestamp)
@@ -249,19 +281,51 @@ static int const kOpenUDIDRedundancySlots = 100;
     NSArray* arrayOfUDIDs = [frequencyDict keysSortedByValueUsingSelector:@selector(compare:)];
     NSString* mostReliableOpenUDID = (arrayOfUDIDs!=nil && [arrayOfUDIDs count]>0)? [arrayOfUDIDs lastObject] : nil;
     OpenUDIDLog(@"Freq Dict = %@\nMost reliable %@",frequencyDict,mostReliableOpenUDID);
-        
+      
+    if( keychain == nil )
+        keychain = [[OpenUDID_KeychainItemWrapper alloc]initWithIdentifier:kOpenUDIDKey accessGroup:nil];
+    
+    NSString* keyChainUDID = [keychain objectForKey:(id)kSecValueData];
+    OpenUDIDLog(@"Keychain UDID = %@", keyChainUDID);
+    
     // if openUDID was not retrieved from the local preferences, then let's try to get it from the frequency dictionary above
     //
     if (openUDID==nil) {        
         if (mostReliableOpenUDID==nil) {
-            // this is the case where this app instance is likely to be the first one to use OpenUDID on this device
-            // we create the OpenUDID, legacy or semi-random (i.e. most certainly unique)
+            // This is the case where this app instance is likely to be the first one to use OpenUDID on this device.
+            // First, check to see if THIS app has created an OpenUDID previously and stored it into the keychain.
+            // If not, we create the new OpenUDID, legacy or semi-random (i.e. most certainly unique)
             //
-            openUDID = [OpenUDID _generateFreshOpenUDID];
+            openUDID = keyChainUDID;
+            if( [openUDID length] == 0 )
+                openUDID = [OpenUDID _generateFreshOpenUDID];
         } else {
-            // or we leverage the OpenUDID shared by other apps that have already gone through the process
-            // 
-            openUDID = mostReliableOpenUDID;
+            // Or we leverage the OpenUDID shared by other apps that have already gone through the process
+            // HOWEVER, if the keychain stored UDID is present, favor that value for consistency across 
+            // application installs in THIS app and mark the value as multiples (for now)
+            // NOTE: In future, we need to come up with a way to handle this case more elegantly... how to sync
+            // these values when a new OpenUDID is generated between existing application installs?
+            //
+            if( [mostReliableOpenUDID isEqualToString:keyChainUDID] && [keyChainUDID length] > 0 )
+            {
+                // Equal and life is good.
+                openUDID = mostReliableOpenUDID;
+            }
+            else if( [keyChainUDID length] > 0 )
+            {
+                // Keychain value and stored value are different.  This could occur if this app was originally installed
+                // and then removed.  Before this app was reinstalled, a new OpenUDID enabled app created a new value.
+                // Now this app is reinstalled.  For consistency in THIS app, deferring to the keychain value.  In future
+                // Need to find some way to handle this case more elegantly.
+                openUDID = keyChainUDID;
+                isMultiples = YES;
+            }
+            else
+            {
+                // Don't have a keychain value yet... so this is the first time this app has been installed
+                // Defer to the previously saved OpenUDID and store it in the keychain for this app.
+                openUDID = mostReliableOpenUDID;
+            }
         }
         // then we create a local representation
         //
@@ -309,6 +373,10 @@ static int const kOpenUDIDRedundancySlots = 100;
     //
     if (localDict && saveLocalDictToDefaults)
         [defaults setObject:localDict forKey:kOpenUDIDKey];
+    
+    // Save the OpenUDID to the keychain if needed
+    if( [[keychain objectForKey:(id)kSecValueData]length] == 0 )
+        [keychain setObject:openUDID forKey:(id)kSecValueData];
 
     // If the UIPasteboard external representation marks this app as opted-out, then to respect privacy, we return the ZERO OpenUDID, a sequence of 40 zeros...
     // This is a *new* case that developers have to deal with. Unlikely, statistically low, but still.
@@ -331,6 +399,10 @@ static int const kOpenUDIDRedundancySlots = 100;
             *error = [NSError errorWithDomain:kOpenUDIDDomain
                                          code:kOpenUDIDErrorCompromised
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Found a discrepancy between stored OpenUDID (reliable) and redundant copies; one of the apps on the device is most likely corrupting the OpenUDID protocol",@"description", nil]];
+        else if( isMultiples )
+            *error = [NSError errorWithDomain:kOpenUDIDDomain
+                                         code:kOpenUDIDErrorMultiple
+                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Found multiple OpenUDID values (keychain vs cross-application stores). This occurs when all OpenUDID-enabled apps are removed, a new one is installed, and then a previous app is reinstalled",@"description", nil]];
         else
             *error = [NSError errorWithDomain:kOpenUDIDDomain
                                          code:kOpenUDIDErrorNone
@@ -372,3 +444,323 @@ static int const kOpenUDIDRedundancySlots = 100;
 }
 
 @end
+
+#pragma mark
+#pragma mark Apple KeychainItemWrapper implementation
+
+/*
+ File: KeychainItemWrapper.m 
+ Abstract: 
+ Objective-C wrapper for accessing a single keychain item.
+ 
+ Version: 1.2 
+ 
+ Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
+ Inc. ("Apple") in consideration of your agreement to the following 
+ terms, and your use, installation, modification or redistribution of 
+ this Apple software constitutes acceptance of these terms.  If you do 
+ not agree with these terms, please do not use, install, modify or 
+ redistribute this Apple software. 
+ 
+ In consideration of your agreement to abide by the following terms, and 
+ subject to these terms, Apple grants you a personal, non-exclusive 
+ license, under Apple's copyrights in this original Apple software (the 
+ "Apple Software"), to use, reproduce, modify and redistribute the Apple 
+ Software, with or without modifications, in source and/or binary forms; 
+ provided that if you redistribute the Apple Software in its entirety and 
+ without modifications, you must retain this notice and the following 
+ text and disclaimers in all such redistributions of the Apple Software. 
+ Neither the name, trademarks, service marks or logos of Apple Inc. may 
+ be used to endorse or promote products derived from the Apple Software 
+ without specific prior written permission from Apple.  Except as 
+ expressly stated in this notice, no other rights or licenses, express or 
+ implied, are granted by Apple herein, including but not limited to any 
+ patent rights that may be infringed by your derivative works or by other 
+ works in which the Apple Software may be incorporated. 
+ 
+ The Apple Software is provided by Apple on an "AS IS" basis.  APPLE 
+ MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION 
+ THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS 
+ FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND 
+ OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS. 
+ 
+ IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL 
+ OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+ INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION, 
+ MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED 
+ AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE), 
+ STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE 
+ POSSIBILITY OF SUCH DAMAGE. 
+ 
+ Copyright (C) 2010 Apple Inc. All Rights Reserved. 
+ 
+ */ 
+
+#import <Security/Security.h>
+
+/*
+ 
+ These are the default constants and their respective types,
+ available for the kSecClassGenericPassword Keychain Item class:
+ 
+ kSecAttrAccessGroup         -       CFStringRef
+ kSecAttrCreationDate        -       CFDateRef
+ kSecAttrModificationDate    -       CFDateRef
+ kSecAttrDescription         -       CFStringRef
+ kSecAttrComment             -       CFStringRef
+ kSecAttrCreator             -       CFNumberRef
+ kSecAttrType                -       CFNumberRef
+ kSecAttrLabel               -       CFStringRef
+ kSecAttrIsInvisible         -       CFBooleanRef
+ kSecAttrIsNegative          -       CFBooleanRef
+ kSecAttrAccount             -       CFStringRef
+ kSecAttrService             -       CFStringRef
+ kSecAttrGeneric             -       CFDataRef
+ 
+ See the header file Security/SecItem.h for more details.
+ 
+ */
+
+@interface OpenUDID_KeychainItemWrapper (PrivateMethods)
+/*
+ The decision behind the following two methods (secItemFormatToDictionary and dictionaryToSecItemFormat) was
+ to encapsulate the transition between what the detail view controller was expecting (NSString *) and what the
+ Keychain API expects as a validly constructed container class.
+ */
+- (NSMutableDictionary *)secItemFormatToDictionary:(NSDictionary *)dictionaryToConvert;
+- (NSMutableDictionary *)dictionaryToSecItemFormat:(NSDictionary *)dictionaryToConvert;
+
+// Updates the item in the keychain, or adds it if it doesn't exist.
+- (void)writeToKeychain;
+
+@end
+
+@implementation OpenUDID_KeychainItemWrapper
+
+@synthesize keychainItemData, genericPasswordQuery;
+
+- (id)initWithIdentifier: (NSString *)identifier accessGroup:(NSString *) accessGroup;
+{
+    if (self = [super init])
+    {
+        // Begin Keychain search setup. The genericPasswordQuery leverages the special user
+        // defined attribute kSecAttrGeneric to distinguish itself between other generic Keychain
+        // items which may be included by the same application.
+        genericPasswordQuery = [[NSMutableDictionary alloc] init];
+        
+        [genericPasswordQuery setObject:(id)kSecClassGenericPassword forKey:(id)kSecClass];
+        [genericPasswordQuery setObject:identifier forKey:(id)kSecAttrGeneric];
+        
+        // The keychain access group attribute determines if this item can be shared
+        // amongst multiple apps whose code signing entitlements contain the same keychain access group.
+        if (accessGroup != nil)
+        {
+#if TARGET_IPHONE_SIMULATOR
+            // Ignore the access group if running on the iPhone simulator.
+            // 
+            // Apps that are built for the simulator aren't signed, so there's no keychain access group
+            // for the simulator to check. This means that all apps can see all keychain items when run
+            // on the simulator.
+            //
+            // If a SecItem contains an access group attribute, SecItemAdd and SecItemUpdate on the
+            // simulator will return -25243 (errSecNoAccessForItem).
+#else           
+            [genericPasswordQuery setObject:accessGroup forKey:(id)kSecAttrAccessGroup];
+#endif
+        }
+        
+        // Use the proper search constants, return only the attributes of the first match.
+        [genericPasswordQuery setObject:(id)kSecMatchLimitOne forKey:(id)kSecMatchLimit];
+        [genericPasswordQuery setObject:(id)kCFBooleanTrue forKey:(id)kSecReturnAttributes];
+        
+        NSDictionary *tempQuery = [NSDictionary dictionaryWithDictionary:genericPasswordQuery];
+        
+        NSMutableDictionary *outDictionary = nil;
+        
+        if (! SecItemCopyMatching((CFDictionaryRef)tempQuery, (CFTypeRef *)&outDictionary) == noErr)
+        {
+            // Stick these default values into keychain item if nothing found.
+            [self resetKeychainItem];
+            
+            // Add the generic attribute and the keychain access group.
+            [keychainItemData setObject:identifier forKey:(id)kSecAttrGeneric];
+            if (accessGroup != nil)
+            {
+#if TARGET_IPHONE_SIMULATOR
+                // Ignore the access group if running on the iPhone simulator.
+                // 
+                // Apps that are built for the simulator aren't signed, so there's no keychain access group
+                // for the simulator to check. This means that all apps can see all keychain items when run
+                // on the simulator.
+                //
+                // If a SecItem contains an access group attribute, SecItemAdd and SecItemUpdate on the
+                // simulator will return -25243 (errSecNoAccessForItem).
+#else           
+                [keychainItemData setObject:accessGroup forKey:(id)kSecAttrAccessGroup];
+#endif
+            }
+        }
+        else
+        {
+            // load the saved data from Keychain.
+            self.keychainItemData = [self secItemFormatToDictionary:outDictionary];
+        }
+        
+        [outDictionary release];
+    }
+    
+    return self;
+}
+
+- (void)dealloc
+{
+    [keychainItemData release];
+    [genericPasswordQuery release];
+    
+    [super dealloc];
+}
+
+- (void)setObject:(id)inObject forKey:(id)key 
+{
+    if (inObject == nil) return;
+    id currentObject = [keychainItemData objectForKey:key];
+    if (![currentObject isEqual:inObject])
+    {
+        [keychainItemData setObject:inObject forKey:key];
+        [self writeToKeychain];
+    }
+}
+
+- (id)objectForKey:(id)key
+{
+    return [keychainItemData objectForKey:key];
+}
+
+- (void)resetKeychainItem
+{
+    OSStatus junk = noErr;
+    if (!keychainItemData) 
+    {
+        self.keychainItemData = [[NSMutableDictionary alloc] init];
+    }
+    else if (keychainItemData)
+    {
+        NSMutableDictionary *tempDictionary = [self dictionaryToSecItemFormat:keychainItemData];
+        junk = SecItemDelete((CFDictionaryRef)tempDictionary);
+        NSAssert( junk == noErr || junk == errSecItemNotFound, @"Problem deleting current dictionary." );
+    }
+    
+    // Default attributes for keychain item.
+    [keychainItemData setObject:@"" forKey:(id)kSecAttrAccount];
+    [keychainItemData setObject:@"" forKey:(id)kSecAttrLabel];
+    [keychainItemData setObject:@"" forKey:(id)kSecAttrDescription];
+    
+    // Default data for keychain item.
+    [keychainItemData setObject:@"" forKey:(id)kSecValueData];
+}
+
+- (NSMutableDictionary *)dictionaryToSecItemFormat:(NSDictionary *)dictionaryToConvert
+{
+    // The assumption is that this method will be called with a properly populated dictionary
+    // containing all the right key/value pairs for a SecItem.
+    
+    // Create a dictionary to return populated with the attributes and data.
+    NSMutableDictionary *returnDictionary = [NSMutableDictionary dictionaryWithDictionary:dictionaryToConvert];
+    
+    // Add the Generic Password keychain item class attribute.
+    [returnDictionary setObject:(id)kSecClassGenericPassword forKey:(id)kSecClass];
+    
+    // Convert the NSString to NSData to meet the requirements for the value type kSecValueData.
+    // This is where to store sensitive data that should be encrypted.
+    NSString *passwordString = [dictionaryToConvert objectForKey:(id)kSecValueData];
+    [returnDictionary setObject:[passwordString dataUsingEncoding:NSUTF8StringEncoding] forKey:(id)kSecValueData];
+    
+    return returnDictionary;
+}
+
+- (NSMutableDictionary *)secItemFormatToDictionary:(NSDictionary *)dictionaryToConvert
+{
+    // The assumption is that this method will be called with a properly populated dictionary
+    // containing all the right key/value pairs for the UI element.
+    
+    // Create a dictionary to return populated with the attributes and data.
+    NSMutableDictionary *returnDictionary = [NSMutableDictionary dictionaryWithDictionary:dictionaryToConvert];
+    
+    // Add the proper search key and class attribute.
+    [returnDictionary setObject:(id)kCFBooleanTrue forKey:(id)kSecReturnData];
+    [returnDictionary setObject:(id)kSecClassGenericPassword forKey:(id)kSecClass];
+    
+    // Acquire the password data from the attributes.
+    NSData *passwordData = NULL;
+    if (SecItemCopyMatching((CFDictionaryRef)returnDictionary, (CFTypeRef *)&passwordData) == noErr)
+    {
+        // Remove the search, class, and identifier key/value, we don't need them anymore.
+        [returnDictionary removeObjectForKey:(id)kSecReturnData];
+        
+        // Add the password to the dictionary, converting from NSData to NSString.
+        NSString *password = [[[NSString alloc] initWithBytes:[passwordData bytes] length:[passwordData length] 
+                                                     encoding:NSUTF8StringEncoding] autorelease];
+        [returnDictionary setObject:password forKey:(id)kSecValueData];
+    }
+    else
+    {
+        // Don't do anything if nothing is found.
+        NSAssert(NO, @"Serious error, no matching item found in the keychain.\n");
+    }
+    
+    [passwordData release];
+    
+    return returnDictionary;
+}
+
+- (void)writeToKeychain
+{
+    NSDictionary *attributes = NULL;
+    NSMutableDictionary *updateItem = NULL;
+    OSStatus result;
+    
+    if (SecItemCopyMatching((CFDictionaryRef)genericPasswordQuery, (CFTypeRef *)&attributes) == noErr)
+    {
+        // First we need the attributes from the Keychain.
+        updateItem = [NSMutableDictionary dictionaryWithDictionary:attributes];
+        // Second we need to add the appropriate search key/values.
+        [updateItem setObject:[genericPasswordQuery objectForKey:(id)kSecClass] forKey:(id)kSecClass];
+        
+        // Lastly, we need to set up the updated attribute list being careful to remove the class.
+        NSMutableDictionary *tempCheck = [self dictionaryToSecItemFormat:keychainItemData];
+        [tempCheck removeObjectForKey:(id)kSecClass];
+        
+#if TARGET_IPHONE_SIMULATOR
+        // Remove the access group if running on the iPhone simulator.
+        // 
+        // Apps that are built for the simulator aren't signed, so there's no keychain access group
+        // for the simulator to check. This means that all apps can see all keychain items when run
+        // on the simulator.
+        //
+        // If a SecItem contains an access group attribute, SecItemAdd and SecItemUpdate on the
+        // simulator will return -25243 (errSecNoAccessForItem).
+        //
+        // The access group attribute will be included in items returned by SecItemCopyMatching,
+        // which is why we need to remove it before updating the item.
+        [tempCheck removeObjectForKey:(id)kSecAttrAccessGroup];
+#endif
+        
+        // An implicit assumption is that you can only update a single item at a time.
+        
+        result = SecItemUpdate((CFDictionaryRef)updateItem, (CFDictionaryRef)tempCheck);
+        NSAssert( result == noErr, @"Couldn't update the Keychain Item." );
+    }
+    else
+    {
+        // No previous item found; add the new one.
+        result = SecItemAdd((CFDictionaryRef)[self dictionaryToSecItemFormat:keychainItemData], NULL);
+        NSAssert( result == noErr, @"Couldn't add the Keychain Item." );
+    }
+}
+
+@end
+
+#pragma mark -
+
+
