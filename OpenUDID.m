@@ -126,16 +126,16 @@ static int const kOpenUDIDRedundancySlots = 100;
     // Collision is possible of course, but unlikely and suitable for most industry needs (e.g.. aggregate tracking)
     //
     if (_openUDID==nil) {
-        unsigned char result[16];
-        const char *cStr = [[[NSProcessInfo processInfo] globallyUniqueString] UTF8String];
-        CC_MD5( cStr, strlen(cStr), result );
-        _openUDID = [NSString stringWithFormat:
-                @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%08x",
-                result[0], result[1], result[2], result[3], 
-                result[4], result[5], result[6], result[7],
-                result[8], result[9], result[10], result[11],
-                result[12], result[13], result[14], result[15],
-                arc4random() % 4294967295];  
+        // UUIDs (Universally Unique Identifiers), also known as GUIDs (Globally Unique Identifiers) or IIDs 
+        // (Interface Identifiers), are 128-bit values guaranteed to be unique. A UUID is made unique over 
+        // both space and time by combining a value unique to the computer on which it was generated—usually the
+        // Ethernet hardware address—and a value representing the number of 100-nanosecond intervals since 
+        // October 15, 1582 at 00:00:00.
+        CFUUIDRef uuid = CFUUIDCreate(NULL);
+        CFStringRef cfstring = CFUUIDCreateString(NULL, uuid);
+        NSString *string = (NSString *)cfstring;
+        _openUDID = [string autorelease];
+        CFRelease(uuid);
     }
     
     // Call to other developers in the Open Source community:
