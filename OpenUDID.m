@@ -181,7 +181,7 @@ static int const kOpenUDIDRedundancySlots = 100;
     
     // The AppUID will uniquely identify this app within the pastebins
     //
-    NSString * appUID = (NSString *) [defaults objectForKey:kOpenUDIDAppUIDKey];
+    NSString * appUID = (NSString *) [[defaults objectForKey:kOpenUDIDAppUIDKey] retain];
     if(appUID == nil)
     {
       // generate a new uuid and store it in user defaults
@@ -346,7 +346,7 @@ static int const kOpenUDIDRedundancySlots = 100;
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"OpenUDID succesfully retrieved",@"description", nil]];
     }
     kOpenUDIDSessionCache = [openUDID retain];
-	[guuid release];
+	[appUID release];
     return kOpenUDIDSessionCache;
 }
 
