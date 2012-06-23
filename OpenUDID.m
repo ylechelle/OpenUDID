@@ -35,13 +35,6 @@
  3. This notice may not be removed or altered from any source
  distribution.
 */
-
-#if __has_feature(objc_arc)
-#error This file uses the classic non-ARC retain/release model; hints below... 
-    // to selectively compile this file as non-ARC, do as follows:
-    // https://img.skitch.com/20120411-bcku69k1uw528cwh9frh5px8ya.png
-#endif
-
 #import "OpenUDID.h"
 #import <CommonCrypto/CommonDigest.h> // Need to import for CC_MD5 access
 #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
@@ -186,7 +179,11 @@ static int const kOpenUDIDRedundancySlots = 100;
     {
       // generate a new uuid and store it in user defaults
       CFUUIDRef uuid = CFUUIDCreate(NULL);
-      appUID = (NSString *) CFUUIDCreateString(NULL, uuid);
+#if __has_feature(objc_arc)
+        appUID = (__bridge NSString *) CFUUIDCreateString(NULL, uuid);
+#else
+        appUID = (NSString *) CFUUIDCreateString(NULL, uuid);
+#endif
       CFRelease(uuid);
     }
   
@@ -328,8 +325,12 @@ static int const kOpenUDIDRedundancySlots = 100;
         if (error!=nil) *error = [NSError errorWithDomain:kOpenUDIDDomain
                                                      code:kOpenUDIDErrorOptedOut
                                                  userInfo:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithFormat:@"Application with unique id %@ is opted-out from OpenUDID as of %@",appUID,optedOutDate],@"description", nil]];
-            
+        
+#if __has_feature(objc_arc)
+        kOpenUDIDSessionCache = [NSString stringWithFormat:@"%040x",0];
+#else
         kOpenUDIDSessionCache = [[NSString stringWithFormat:@"%040x",0] retain];
+#endif
         return kOpenUDIDSessionCache;
     }
 
@@ -345,7 +346,12 @@ static int const kOpenUDIDRedundancySlots = 100;
                                          code:kOpenUDIDErrorNone
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"OpenUDID succesfully retrieved",@"description", nil]];
     }
+#if __has_feature(objc_arc)
+    kOpenUDIDSessionCache = openUDID;
+#else
     kOpenUDIDSessionCache = [openUDID retain];
+#endif
+
     return kOpenUDIDSessionCache;
 }
 
