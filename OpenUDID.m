@@ -39,7 +39,7 @@
 #if __has_feature(objc_arc)
 #error This file uses the classic non-ARC retain/release model; hints below... 
     // to selectively compile this file as non-ARC, do as follows:
-    // https://img.skitch.com/20120411-bcku69k1uw528cwh9frh5px8ya.png
+    // https://img.skitch.com/20120717-g3ag5h9a6ehkgpmpjiuen3qpwp.png
 #endif
 
 #import "OpenUDID.h"
@@ -144,7 +144,7 @@ static int const kOpenUDIDRedundancySlots = 100;
                 result[4], result[5], result[6], result[7],
                 result[8], result[9], result[10], result[11],
                 result[12], result[13], result[14], result[15],
-                arc4random() % 4294967295];  
+                     (NSUInteger)(arc4random() % NSUIntegerMax)];  
     }
     
     // Call to other developers in the Open Source community:
