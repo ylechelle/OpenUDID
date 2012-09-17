@@ -146,7 +146,15 @@ static int const kOpenUDIDRedundancySlots = 100;
     // new users in iOS 5 and before. For new users on iOS 6 and after, the new official public APIs will take over.
     // OpenUDID will therefore be obsoleted when iOS reaches significant adoption, anticipated around mid-2013.
 
+    /*
 
+        September 14; ok, new development. The alleged API has moved!
+        This part of the code will therefore be updated when iOS 6 is actually released.
+        Nevertheless, if you want to go ahead, the code should be pretty easy to
+        guess... it involves including a .h file from a nine-letter framework that ends
+        with the word "Support", and then assigning _openUDID with the only identifier method called on the sharedManager of that new class... don't forget to add
+        the framework to your project!
+     
 #if TARGET_OS_IPHONE
     if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"6.0")) {
         _openUDID = [[[UIDevice currentDevice] identifierForA_______] UUIDString];
@@ -154,6 +162,7 @@ static int const kOpenUDIDRedundancySlots = 100;
     }
 #endif
     
+     */
     
     // Next we generate a UUID.
     // UUIDs (Universally Unique Identifiers), also known as GUIDs (Globally Unique Identifiers) or IIDs
