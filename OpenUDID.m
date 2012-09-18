@@ -188,6 +188,8 @@ static int const kOpenUDIDRedundancySlots = 100;
                 result[8], result[9], result[10], result[11],
                 result[12], result[13], result[14], result[15],
                      (NSUInteger)(arc4random() % NSUIntegerMax)];  
+
+        CFRelease(cfstring);
     }
     
     // Call to other developers in the Open Source community:
