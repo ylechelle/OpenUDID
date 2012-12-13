@@ -42,8 +42,6 @@
     // https://img.skitch.com/20120717-g3ag5h9a6ehkgpmpjiuen3qpwp.png
 #endif
 
-#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
-
 #import "OpenUDID.h"
 #import <CommonCrypto/CommonDigest.h> // Need to import for CC_MD5 access
 #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
