@@ -141,7 +141,8 @@ static int const kOpenUDIDRedundancySlots = 100;
 			result[12], result[13], result[14], result[15],
 				 (NSUInteger)(arc4random() % NSUIntegerMax)];  
 
-    
+    CFRelease(cfstring);
+	
     // Call to other developers in the Open Source community:
     //
     // feel free to suggest better or alternative "UDID" generation code above.
