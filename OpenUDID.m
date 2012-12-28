@@ -42,8 +42,6 @@
     // https://img.skitch.com/20120717-g3ag5h9a6ehkgpmpjiuen3qpwp.png
 #endif
 
-#define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
-
 #import "OpenUDID.h"
 #import <CommonCrypto/CommonDigest.h> // Need to import for CC_MD5 access
 #if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
@@ -116,54 +114,7 @@ static int const kOpenUDIDRedundancySlots = 100;
 + (NSString*) _generateFreshOpenUDID {
     
     NSString* _openUDID = nil;
-    
-    // August 2011: One day, this may no longer be allowed in iOS. When that is, just comment this line out.
-    // March 25th 2012: this day has come, let's remove this "outlawed" call...
-    // August 2012: well, perhaps much ado about nothing; in any case WWDC2012 gave us something to work with; read below
-#if TARGET_OS_IPHONE	
-//    if([UIDevice instancesRespondToSelector:@selector(uniqueIdentifier)]){
-//        _openUDID = [[UIDevice currentDevice] uniqueIdentifier];
-//    }
-#endif
-    
-    //
-    // !!!!! IMPORTANT README !!!!!
-    //
-    // August 2012: iOS 6 introduces new APIs that help us deal with the now deprecated [UIDevice uniqueIdentifier]
-    // Since iOS 6 is still pre-release and under NDA, the following piece of code is meant to produce an error at
-    // compile time. Accredited developers integrating OpenUDID are expected to review the iOS 6 release notes and
-    // documentation, and replace the underscore ______ in the last part of the selector below with the right
-    // selector syntax as described here (make sure to use the right one! last word starts with the letter "A"):
-    // https://developer.apple.com/library/prerelease/ios/#documentation/UIKit/Reference/UIDevice_Class/Reference/UIDevice.html
-    //
-    // The semantic compiler warnings are still normal if you are compiling for iOS 5 only since Xcode will not
-    // know about the two instance methods used on that line; the code running on iOS will work well at run-time.
-    // Either way, it's time that you junped on the iOS 6 bandwagon and start testing your code on iOS 6 ;-)
-    //
-    // WHAT IS THE SIGNIFICANCE OF THIS CHANGE?
-    //
-    // Essentially, this means that OpenUDID will keep on behaving the same way as before for existing users or
-    // new users in iOS 5 and before. For new users on iOS 6 and after, the new official public APIs will take over.
-    // OpenUDID will therefore be obsoleted when iOS reaches significant adoption, anticipated around mid-2013.
 
-    /*
-
-        September 14; ok, new development. The alleged API has moved!
-        This part of the code will therefore be updated when iOS 6 is actually released.
-        Nevertheless, if you want to go ahead, the code should be pretty easy to
-        guess... it involves including a .h file from a nine-letter framework that ends
-        with the word "Support", and then assigning _openUDID with the only identifier method called on the sharedManager of that new class... don't forget to add
-        the framework to your project!
-     
-#if TARGET_OS_IPHONE
-    if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"6.0")) {
-        _openUDID = [[[UIDevice currentDevice] identifierForA_______] UUIDString];
-# error                                                         ^ read comments above, fix accordingly, and remove this #error line
-    }
-#endif
-    
-     */
-    
     // Next we generate a UUID.
     // UUIDs (Universally Unique Identifiers), also known as GUIDs (Globally Unique Identifiers) or IIDs
     // (Interface Identifiers), are 128-bit values guaranteed to be unique. A UUID is made unique over 
@@ -173,23 +124,23 @@ static int const kOpenUDIDRedundancySlots = 100;
     // We then hash this UUID with md5 to get 32 bytes, and then add 4 extra random bytes
     // Collision is possible of course, but unlikely and suitable for most industry needs (e.g. aggregate tracking)
     //
-    if (_openUDID==nil) {
-        CFUUIDRef uuid = CFUUIDCreate(kCFAllocatorDefault);
-        CFStringRef cfstring = CFUUIDCreateString(kCFAllocatorDefault, uuid);
-        const char *cStr = CFStringGetCStringPtr(cfstring,CFStringGetFastestEncoding(cfstring));
-        unsigned char result[16];
-        CC_MD5( cStr, strlen(cStr), result );
-        CFRelease(uuid);
+	CFUUIDRef uuid = CFUUIDCreate(kCFAllocatorDefault);
+	CFStringRef cfstring = CFUUIDCreateString(kCFAllocatorDefault, uuid);
+	const char *cStr = CFStringGetCStringPtr(cfstring,CFStringGetFastestEncoding(cfstring));
+	unsigned char result[16];
+	CC_MD5( cStr, strlen(cStr), result );
+	CFRelease(uuid);
 
-        _openUDID = [NSString stringWithFormat:
-                @"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%08x",
-                result[0], result[1], result[2], result[3], 
-                result[4], result[5], result[6], result[7],
-                result[8], result[9], result[10], result[11],
-                result[12], result[13], result[14], result[15],
-                     (NSUInteger)(arc4random() % NSUIntegerMax)];  
-    }
-    
+	_openUDID = [NSString stringWithFormat:
+			@"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%08x",
+			result[0], result[1], result[2], result[3], 
+			result[4], result[5], result[6], result[7],
+			result[8], result[9], result[10], result[11],
+			result[12], result[13], result[14], result[15],
+				 (NSUInteger)(arc4random() % NSUIntegerMax)];  
+
+    CFRelease(cfstring);
+	
     // Call to other developers in the Open Source community:
     //
     // feel free to suggest better or alternative "UDID" generation code above.
