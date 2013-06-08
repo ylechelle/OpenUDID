@@ -1,3 +1,11 @@
+##IMPORTANT NOTE
+
+Please read this blog post before considering using OpenUDID:
+
+	http://blog.appsfire.com/udid-is-dead-openudid-is-deprecated-long-live-advertisingidentifier/
+
+####OpenUDID project notes
+
 	IMPORTANT: IF YOU ARE GOING TO INTEGRATE OpenUDID INSIDE A (STATIC) LIBRARY,
 	PLEASE MAKE SURE YOU REFACTOR THE OpenUDID CLASS WITH A PREFIX OF YOUR OWN,
 	E.G. ACME_OpenUDID. THIS WILL AVOID CONFUSION BY DEVELOPERS WHO ARE ALSO
@@ -47,7 +55,9 @@ In the wake of Apple’s decision to deprecate UDID, some ad networks have alrea
 #####Version History
 - August 2011: launch of the initiative
 - Sept. 9 2011: v1.0 of the code meeting all requirements
-- March. 25 2012: removing all traces of the offending call on iOS
+- March 25 2012: removing all traces of the offending call on iOS
+- June 7 2013: call for deprecation announced here:
+	http://blog.appsfire.com/udid-is-dead-openudid-is-deprecated-long-live-advertisingidentifier/
 
 ####Contributions needed
 Equivalent OpenUDID systems on Blackberry, other platforms, etc...
