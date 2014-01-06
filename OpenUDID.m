@@ -36,10 +36,20 @@
  distribution.
 */
 
-#if __has_feature(objc_arc)
-#error This file uses the classic non-ARC retain/release model; hints below... 
-    // to selectively compile this file as non-ARC, do as follows:
-    // https://img.skitch.com/20120717-g3ag5h9a6ehkgpmpjiuen3qpwp.png
+#if !__has_feature(objc_arc)
+	#define OpenUDIDAutorelease(__v) [__v autorelease];
+
+	#define OpenUDIDRetain(__v) [__v retain];
+	#define OpenUDIDReturnRetained OpenUDIDRetain
+
+	#define OpenUDIDRelease(__v) [__v release];
+#else
+	#define OpenUDIDAutorelease(__v)
+
+	#define OpenUDIDRetain(__v)
+	#define OpenUDIDReturnRetained(__v) (__v)
+
+	#define OpenUDIDRelease(__v)
 #endif
 
 #define SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
@@ -230,9 +240,14 @@ static int const kOpenUDIDRedundancySlots = 100;
     {
       // generate a new uuid and store it in user defaults
         CFUUIDRef uuid = CFUUIDCreate(NULL);
-        appUID = (NSString *) CFUUIDCreateString(NULL, uuid);
+		
+#if !__has_feature(objc_arc)
+		appUID = [(NSString *)CFUUIDCreateString(NULL, uuid) autorelease];
+#else
+        appUID = (NSString *)CFBridgingRelease(CFUUIDCreateString(NULL, uuid));
+#endif
+
         CFRelease(uuid);
-        [appUID autorelease];
     }
   
     NSString* openUDID = nil;
@@ -373,8 +388,8 @@ static int const kOpenUDIDRedundancySlots = 100;
         if (error!=nil) *error = [NSError errorWithDomain:kOpenUDIDDomain
                                                      code:kOpenUDIDErrorOptedOut
                                                  userInfo:[NSDictionary dictionaryWithObjectsAndKeys:[NSString stringWithFormat:@"Application with unique id %@ is opted-out from OpenUDID as of %@",appUID,optedOutDate],@"description", nil]];
-            
-        kOpenUDIDSessionCache = [[NSString stringWithFormat:@"%040x",0] retain];
+		
+		kOpenUDIDSessionCache = OpenUDIDReturnRetained(([NSString stringWithFormat:@"%040x", 0]));
         return kOpenUDIDSessionCache;
     }
 
@@ -390,7 +405,8 @@ static int const kOpenUDIDRedundancySlots = 100;
                                          code:kOpenUDIDErrorNone
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"OpenUDID succesfully retrieved",@"description", nil]];
     }
-    kOpenUDIDSessionCache = [openUDID retain];
+
+	kOpenUDIDSessionCache = OpenUDIDReturnRetained(openUDID);
     return kOpenUDIDSessionCache;
 }
 
