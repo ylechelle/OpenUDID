@@ -391,6 +391,7 @@ static int const kOpenUDIDRedundancySlots = 100;
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"OpenUDID succesfully retrieved",@"description", nil]];
     }
     kOpenUDIDSessionCache = [openUDID retain];
+    CFRelease(appUID);
     return kOpenUDIDSessionCache;
 }
 
