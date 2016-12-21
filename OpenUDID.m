@@ -361,8 +361,10 @@ static int const kOpenUDIDRedundancySlots = 100;
 
     // Save the dictionary locally if applicable
     //
-    if (localDict && saveLocalDictToDefaults)
+    if (localDict && saveLocalDictToDefaults) {
         [defaults setObject:localDict forKey:kOpenUDIDKey];
+        [defaults setObject:guuid forKey:kAppGUUID];
+    }
 
     // If the UIPasteboard external representation marks this app as opted-out, then to respect privacy, we return the ZERO OpenUDID, a sequence of 40 zeros...
     // This is a *new* case that developers have to deal with. Unlikely, statistically low, but still.
