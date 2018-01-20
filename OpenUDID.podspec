@@ -8,4 +8,5 @@ Pod::Spec.new do |s|
   s.author       = { 'Magnus' => 'https://github.com/magnusguo' }
   s.ios.deployment_target = '6.0'
   s.source_files = 'OpenUDID/*.{h,m}'
+  s.requires_arc = true
 end
